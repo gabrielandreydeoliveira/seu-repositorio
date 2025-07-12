@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transpositor de Cifras</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: auto;
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .controls label {
+            font-weight: bold;
+        }
+        .controls button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        #originalKey, #currentKey {
+            font-weight: bold;
+            color: #d63384;
+        }
+        pre {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap; /* Mantém a formatação do texto e quebra linhas */
+            word-wrap: break-word; /* Quebra palavras longas */
+        }
+        .chord {
+            color: #007bff; /* Cor para destacar as cifras */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transpositor de Cifras Musicais</h1>
+
+        <div class="controls">
+            <label>Tom Original: <span id="originalKey">C</span></label>
+            <label>Tom Atual: <span id="currentKey">C</span></label>
+            <button onclick="changeKey(-1)">Diminuir Tom</button>
+            <button onclick="changeKey(1)">Aumentar Tom</button>
+        </div>
+
+        <h2>Letra e Cifra</h2>
+        <pre id="lyricsAndChords"></pre>
+    </div>
+
+    <script>
+        // Mapeamento de notas e seus correspondentes para transposição
+        const sharpNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const flatNotes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]; // Para lidar com bemóis
+
+        // Regex para identificar acordes. É uma regex básica, pode ser aprimorada.
+        // Ela busca por letras maiúsculas seguidas de #, b, m, dim, sus, add, números, etc.
+        const chordRegex = /[A-G](#|b)?(m|maj|min|dim|aug|sus|add)?(\d|sus2|sus4|6|7|9|11|13|b5|#5|b9|#9)?(\/([A-G](#|b)?))?/g;
+
+        // A cifra original da música
+        const originalSong = `
+(Intro)
+Am G C F
+(Verso 1)
+C               G
+Imagine there's no heaven
+Am              Em
+It's easy if you try
+F               C
+No hell below us
+F               C       G
+Above us only sky
+(Refrão)
+C               G
+Imagine all the people
+Am              Em
+Living for today
+(Verso 2)
+C               G
+Imagine there's no countries
+Am              Em
+It isn't hard to do
+F               C
+Nothing to kill or die for
+F               C       G
+And no religion too
+(Refrão)
+C               G
+Imagine all the people
+Am              Em
+Living life in peace
+`;
+
+        let currentKeyIndex = 0; // Índice da nota original (C é 0)
+        let originalBaseKey = "C"; // Define a nota base original da música (você pode ajustar isso manualmente se souber)
+
+        // Função para extrair a nota base do acorde (ex: de "Am" retorna "A", de "C#" retorna "C#")
+        function getBaseNote(chord) {
+            const match = chord.match(/^[A-G](#|b)?/);
+            return match ? match[0] : null;
+        }
+
+        // Função para encontrar o índice de uma nota na escala
+        function findNoteIndex(note) {
+            let index = sharpNotes.indexOf(note);
+            if (index === -1) {
+                index = flatNotes.indexOf(note);
+            }
+            return index;
+        }
+
+        // Função para exibir a cifra e a letra, destacando os acordes
+        function displaySong() {
+            let displayedSong = originalSong.replace(/\n/g, '<br>'); // Troca quebras de linha por <br> para HTML
+
+            // Destaca os acordes na exibição
+            displayedSong = displayedSong.replace(chordRegex, (match) => {
+                return `<span class="chord">${match}</span>`;
+            });
+
+            document.getElementById('lyricsAndChords').innerHTML = displayedSong;
+        }
+
+        // Função para transpor um acorde
+        function transposeChord(chord, steps) {
+            const baseNote = getBaseNote(chord);
+            if (!baseNote) return chord; // Se não for um acorde válido, retorna o original
+
+            let originalIndex = findNoteIndex(baseNote);
+            if (originalIndex === -1) return chord; // Se a nota base não for encontrada, retorna o original
+
+            let newIndex = (originalIndex + steps) % 12;
+            if (newIndex < 0) {
+                newIndex += 12; // Garante que o índice seja positivo
+            }
+
+            const newBaseNote = sharpNotes[newIndex]; // Podemos usar sharpNotes para a saída padrão
+
+            // Mantém o sufixo do acorde (m, maj, 7, etc.)
+            const suffix = chord.substring(baseNote.length);
+            return newBaseNote + suffix;
+        }
+
+        // Função para transpor toda a música
+        function transposeSong(steps) {
+            let transposedSong = originalSong.replace(chordRegex, (match) => {
+                return transposeChord(match, steps);
+            });
+            return transposedSong;
+        }
+
+        // Função para alterar o tom da música
+        function changeKey(direction) { // direction: 1 para aumentar, -1 para diminuir
+            currentKeyIndex += direction;
+
+            // Garante que o índice fique dentro do range de 0 a 11
+            if (currentKeyIndex >= 12) {
+                currentKeyIndex = 0;
+            } else if (currentKeyIndex < 0) {
+                currentKeyIndex = 11;
+            }
+
+            const newBaseKey = sharpNotes[currentKeyIndex];
+            document.getElementById('currentKey').textContent = newBaseKey;
+
+            // Calcula os passos para transposição em relação à chave original da música
+            const originalBaseKeyIndex = findNoteIndex(originalBaseKey);
+            const steps = currentKeyIndex - originalBaseKeyIndex;
+
+            const transposedContent = transposeSong(steps);
+
+            // Atualiza a exibição da letra e cifra
+            document.getElementById('lyricsAndChords').innerHTML = transposedContent.replace(/\n/g, '<br>').replace(chordRegex, (match) => {
+                return `<span class="chord">${match}</span>`;
+            });
+        }
+
+        // Inicializa a exibição da música e o tom original/atual
+        window.onload = () => {
+            document.getElementById('originalKey').textContent = originalBaseKey;
+            document.getElementById('currentKey').textContent = originalBaseKey;
+            currentKeyIndex = findNoteIndex(originalBaseKey);
+            displaySong();
+        };
+    </script>
+</body>
+</html>

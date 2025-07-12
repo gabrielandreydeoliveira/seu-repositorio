@@ -1,1 +1,85 @@
+<div class="container" id="addSongForm" style="display: none;">
+    <h2>Adicionar Nova Música</h2>
+    <label for="newSongTitle">Nome da Música:</label><br>
+    <input type="text" id="newSongTitle" style="width: 98%; padding: 5px; margin-bottom: 10px;"><br>
 
+    <label for="newSongAuthor">Nome do Autor:</label><br>
+    <input type="text" id="newSongAuthor" style="width: 98%; padding: 5px; margin-bottom: 10px;"><br>
+
+    <label for="newSongNotes">Observações:</label><br>
+    <textarea id="newSongNotes" rows="3" style="width: 98%; padding: 5px; margin-bottom: 10px;"></textarea><br>
+
+    <label for="newSongLyrics">Cifra e Letra:</label><br>
+    <textarea id="newSongLyrics" rows="10" style="width: 98%; padding: 5px; margin-bottom: 10px; font-family: 'Courier New', monospace;"></textarea><br>
+
+    <label for="newSongOriginalKey">Tom Original:</label><br>
+    <input type="text" id="newSongOriginalKey" style="width: 50px; padding: 5px; margin-bottom: 15px;"><br>
+
+    <button onclick="saveNewSong()">Salvar Música</button>
+    <button onclick="hideAddSongForm()">Cancelar</button>
+</div>
+
+<div class="controls">
+    <button onclick="showAddSongForm()">Adicionar Nova Música</button>
+</div>
+
+<script>
+    // ... (seu código JavaScript existente) ...
+
+    // Novas funções JavaScript para o formulário
+    function showAddSongForm() {
+        document.getElementById('addSongForm').style.display = 'block';
+        document.querySelector('.container:not(#addSongForm)').style.display = 'none'; // Esconde o transpositor
+    }
+
+    function hideAddSongForm() {
+        document.getElementById('addSongForm').style.display = 'none';
+        document.querySelector('.container:not(#addSongForm)').style.display = 'block'; // Mostra o transpositor
+    }
+
+    function saveNewSong() {
+        const title = document.getElementById('newSongTitle').value;
+        const author = document.getElementById('newSongAuthor').value;
+        const notes = document.getElementById('newSongNotes').value;
+        const lyrics = document.getElementById('newSongLyrics').value;
+        const originalKey = document.getElementById('newSongOriginalKey').value;
+
+        if (!title || !lyrics || !originalKey) {
+            alert("Nome da Música, Cifra e Tom Original são campos obrigatórios!");
+            return;
+        }
+
+        const newSongId = title.toLowerCase().replace(/[^a-z0-9]/g, ''); // Gera um ID simples
+        
+        allSongs[newSongId] = {
+            title: title,
+            lyrics: lyrics,
+            originalKey: originalKey,
+            author: author,
+            notes: notes
+        };
+
+        // Adiciona a nova música ao seletor
+        const songSelector = document.getElementById('songSelector');
+        const option = document.createElement('option');
+        option.value = newSongId;
+        option.textContent = title;
+        songSelector.appendChild(option);
+
+        // Seleciona a nova música e a carrega
+        songSelector.value = newSongId;
+        loadSelectedSong();
+
+        // Esconde o formulário
+        hideAddSongForm();
+
+        alert("Música adicionada temporariamente! Ela desaparecerá ao recarregar a página.");
+
+        // Limpa os campos do formulário
+        document.getElementById('newSongTitle').value = '';
+        document.getElementById('newSongAuthor').value = '';
+        document.getElementById('newSongNotes').value = '';
+        document.getElementById('newSongLyrics').value = '';
+        document.getElementById('newSongOriginalKey').value = '';
+    }
+</script>
